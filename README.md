@@ -1,4 +1,4 @@
-# Initialisation alembic
+# Pense Bête alembic
 ``` shell
 alembic init migrations
 alembic revision --autogenerate -m "Create User Model"

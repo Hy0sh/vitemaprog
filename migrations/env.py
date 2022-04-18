@@ -2,7 +2,7 @@ from logging.config import fileConfig
 import os
 
 from vitemaprog.env import load_env
-from vitemaprog.db import DB
+from vitemaprog.database import DB, BaseModel
 
 from alembic import context
 
@@ -22,8 +22,8 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from vitemaprog.models import Base
-target_metadata = Base.metadata
+from vitemaprog.models import *
+target_metadata = BaseModel.metadata
 # target_metadata = None
 
 # other values from the config, defined by the needs of env.py,

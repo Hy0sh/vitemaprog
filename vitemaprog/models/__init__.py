@@ -1,1 +1,1 @@
-from vitemaprog.models.user import *
+from vitemaprog.models.auth import *

@@ -1,25 +1,37 @@
-from vitemaprog.models import User
-from vitemaprog.requests import UserCreate, UserUpdate
-import crypt
+from vitemaprog.exeptions.validation_exception import ValidationException
+from vitemaprog.models import UserModel
+from vitemaprog.requests import UserCreate, UserUpdate, UserUpdatePassword
+
 
 __all__ = ["UserController"]
 class UserController():
     def get_users():
-        return User.all()
+        return UserModel.all()
 
     def get_user(user_uuid:str):
-        return User.find(user_uuid, raise_exception=True)
+        return UserModel.find(user_uuid, raise_exception=True)
 
     def create_user(user: UserCreate):
-        user.password = crypt.crypt(user.password, crypt.mksalt(crypt.METHOD_SHA512))
-        return User.create(user)
+        user.password = UserModel.hash_password(user.password)
+        return UserModel.create(user).to_json()
 
     def update_user(user_uuid: str, user: UserUpdate):
-        userbdd = User.find(user_uuid, serialize=False, raise_exception=True)
-        userbdd.update(user)
+        user_model = UserModel.find(user_uuid, serialize=False, raise_exception=True)
+        user_model.update(user)
 
-        return userbdd.to_json()
+        return user_model.to_json()
+
+    def update_user_password(user_uuid: str, user: UserUpdatePassword):
+        user_model = UserModel.find(user_uuid, serialize=False, raise_exception=True)
+
+        if not user_model.validate_password(user.current_password):
+            raise ValidationException(message="Current password is incorrect", field="current_password",type="value_error.password_invalid")
+
+        user_model.password = UserModel.hash_password(user.new_password)
+        user_model.save()
+
+        return user_model.to_json()
 
     def delete_user(user_uuid: str):
-        user = User.find(user_uuid, serialize=False, raise_exception=True)
-        user.delete()
+        user_model = UserModel.find(user_uuid, serialize=False, raise_exception=True)
+        user_model.delete()
