@@ -21,7 +21,8 @@ for arg in sys.argv[1::]:
         else:
             print("Lancement du seeder {}".format(arg))
             cls.run()
-    except AttributeError:
+    except AttributeError as e:
+        print(e)
         print("Seeder inconnu: {}".format(arg))
         continue
     except Exception as e:

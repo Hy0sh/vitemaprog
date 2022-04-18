@@ -4,13 +4,14 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Boolean, Column, String, DateTime, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from vitemaprog.database import BaseModel
+from slugify import slugify
 import uuid
 from vitemaprog.requests.role_request import Role
 
 
 role_right = Table('roles_rights', BaseModel.metadata,
-    Column('role_uuid', UUID(as_uuid=True), ForeignKey('roles.uuid')),
-    Column('right_uuid', UUID(as_uuid=True), ForeignKey('rights.uuid'))
+    Column('role_uuid', UUID(as_uuid=True), ForeignKey('roles.uuid'), primary_key=True),
+    Column('right_uuid', UUID(as_uuid=True), ForeignKey('rights.uuid'), primary_key=True)
 )
 
 class RoleModel(BaseModel):
@@ -25,7 +26,12 @@ class RoleModel(BaseModel):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
-    rights = relationship('RightModel', secondary=role_right, back_populates='roles')
+    rights = relationship('RightModel', secondary=role_right)
+
+    def __init__(self, label: str, is_admin: bool = False):
+        self.label = label
+        self.slug = slugify(label)
+        self.is_admin = is_admin
 
 
     def __repr__(self) -> str:

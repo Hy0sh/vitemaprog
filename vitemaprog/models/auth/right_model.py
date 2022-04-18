@@ -19,8 +19,6 @@ class RightModel(BaseModel):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
-    roles = relationship('RoleModel', secondary='roles_rights', back_populates='rights')
-
     def __init__(self, label: str):
         self.label = label
         self.slug = slugify(label)

@@ -2,13 +2,12 @@
 from datetime import datetime
 from pydantic import BaseModel as PydanticBaseModel
 from vitemaprog.exeptions import ModelNotFoundException, ConfigurationException
-from vitemaprog.database.db import SessionLocal
+from vitemaprog.database.db import DB
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 class BaseModel(declarative_base()):
     __abstract__ = True
-
-    __session__ = None
 
     # Sérialise l'objet en JSON
     def to_json(self) -> dict:
@@ -21,12 +20,12 @@ class BaseModel(declarative_base()):
 
     # Rafraichissement des données au prêt de la base de données
     def refresh(self) -> None:
-        session = self.__class__.get_session()
+        session = self.__class__.get_db()
         session.refresh(self)
 
     # Supprime l'objet de la base de données
     def delete(self) -> None:
-        session = self.__class__.get_session()
+        session = self.__class__.get_db()
         try:
             session.delete(self)
             session.commit()
@@ -44,8 +43,17 @@ class BaseModel(declarative_base()):
     # Sauvegarde l'objet dans la base de données
     def save(self) -> None:
         self.updated_at = datetime.utcnow()
-        session = self.__class__.get_session()
+        session = self.__class__.get_db()
         try:
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+
+    def save_relations(self) -> None:
+        session = self.__class__.get_db()
+        try:
+            session.add(self)
             session.commit()
         except Exception as e:
             session.rollback()
@@ -61,15 +69,13 @@ class BaseModel(declarative_base()):
 
     # Retourne la session de la base de données
     @classmethod
-    def get_session(cls) -> SessionLocal:
-        if(cls.__session__ is None):
-            cls.__session__ = SessionLocal()
-        return cls.__session__
+    def get_db(cls) -> sessionmaker:
+        return DB().db
 
     # Retourne la query de l'instance
     @classmethod
     def query(cls):
-        return cls.get_session().query(cls)
+        return cls.get_db().query(cls)
 
     # Renvoie tous les enregistrements de la base de données
     @classmethod
@@ -94,7 +100,7 @@ class BaseModel(declarative_base()):
     # Créé un nouvel enregistrement dans la base de données
     @classmethod
     def create(cls, obj: PydanticBaseModel) -> 'BaseModel':
-        session = cls.get_session()
+        session = cls.get_db()
 
         # Création de l'instance
         instance = cls(**obj.__dict__)
@@ -106,7 +112,5 @@ class BaseModel(declarative_base()):
         except Exception as e:
             session.rollback()
             raise e
-        finally:
-            session.close()
 
         return instance

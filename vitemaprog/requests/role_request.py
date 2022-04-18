@@ -9,3 +9,7 @@ class Role(BaseModel):
     slug: str
     created_at: datetime
     updated_at: datetime
+
+class RoleCreate(BaseModel):
+    label: str
+    is_admin: bool = False
