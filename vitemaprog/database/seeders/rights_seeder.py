@@ -1,5 +1,6 @@
 
 from vitemaprog.database.seeders.seeder_interface import SeederInterface
+from vitemaprog.exeptions.model_already_exists_exception import ModelAlreadyExistsException
 from vitemaprog.models.auth.right_model import RightModel
 from vitemaprog.requests import RightCreate
 
@@ -24,10 +25,6 @@ class RightSeeder(SeederInterface):
             right_create = RightCreate(**right)
             try:
                 RightModel.create(right_create)
-            except Exception as e:
-                message = e.args[0]
-                if "psycopg2.errors.UniqueViolation" in message:
-                    print(f"duplicate right entry : {right['label']}")
-                    continue
-                else:
-                    raise e
+            except ModelAlreadyExistsException:
+                print(f"duplicate role entry : {right['label']}")
+                continue
