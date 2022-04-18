@@ -47,6 +47,6 @@ class DB:
     @property
     def db(self) -> 'sessionmaker':
         if(self.__db__ is None):
-            self.__db__ = sessionmaker(bind=self.db_engine)()
+            self.__db__ = sessionmaker(bind=self.db_engine, expire_on_commit=False)()
         return self.__db__
 

@@ -5,18 +5,27 @@ from vitemaprog.exeptions import ModelNotFoundException, ConfigurationException
 from vitemaprog.database.db import DB
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
+from vitemaprog.exeptions.model_already_exists_exception import ModelAlreadyExistsException
 
 class BaseModel(declarative_base()):
     __abstract__ = True
 
     # Sérialise l'objet en JSON
     def to_json(self) -> dict:
-        if(self.__model_out__ is None):
+        if(not hasattr(self,'__model_out__') or self.__model_out__ is None or not issubclass(self.__model_out__, PydanticBaseModel)):
             raise ConfigurationException(f'Model output is not set for {self.__class__.__name__}')
 
-        self.refresh()
+        dict_from_model_out = {}
+        for field in self.__model_out__.__fields__.values():
+            if(field.type_ == list):
+                dict_from_model_out[field.name] = [ item.to_json() if(isinstance(item, BaseModel)) else item for item in getattr(self, field.name)]
+            elif(issubclass(field.type_, PydanticBaseModel)):
+                dict_from_model_out[field.name] = getattr(self, field.name).to_json()
+            else:
+                dict_from_model_out[field.name] = str(getattr(self, field.name))
 
-        return self.__class__.__model_out__(**self.__dict__)
+        return self.__class__.__model_out__(**dict_from_model_out)
 
     # Rafraichissement des données au prêt de la base de données
     def refresh(self) -> None:
@@ -96,6 +105,9 @@ class BaseModel(declarative_base()):
                 raise ModelNotFoundException(f'{cls.__name__} not found')
             else:
                 return None
+    @classmethod
+    def exists(cls, uuid) -> bool:
+        return cls.query().filter(cls.uuid == uuid).first() is not None
 
     # Créé un nouvel enregistrement dans la base de données
     @classmethod
@@ -109,6 +121,11 @@ class BaseModel(declarative_base()):
         try:
             session.add(instance)
             session.commit()
+        except IntegrityError as e:
+            session.rollback()
+            message = e.args[0]
+            if "psycopg2.errors.UniqueViolation" in message:
+                raise ModelAlreadyExistsException(f'{cls.__name__} already exists')
         except Exception as e:
             session.rollback()
             raise e

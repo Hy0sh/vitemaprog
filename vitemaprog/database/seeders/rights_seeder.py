@@ -1,6 +1,6 @@
 
 from vitemaprog.database.seeders.seeder_interface import SeederInterface
-from vitemaprog.models.auth import RightModel
+from vitemaprog.models.auth.right_model import RightModel
 from vitemaprog.requests import RightCreate
 
 
@@ -8,8 +8,16 @@ class RightSeeder(SeederInterface):
     @classmethod
     def run(cls) -> None:
         rights = [
-            {"label": 'Create Update Delete User'},
-            {"label": 'Create Update Delete Programmations'},
+            {
+                "label": 'Create Update Delete User',
+                "slug": 'create-update-delete-user',
+                "description": 'Authorise la création, la modification et la suppression des utilisateurs'
+            },
+            {
+                "label": 'Create Update Delete Programmations',
+                "slug": 'create-update-delete-programmation',
+                "description": 'Authorise la création, la modification et la suppression des programmations'
+            },
         ]
 
         for right in rights:
