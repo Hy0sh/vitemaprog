@@ -58,7 +58,7 @@ class BaseModel(declarative_base()):
         except Exception as e:
             session.rollback()
             raise e
-
+    # sauvegarde l'objet et ces relations dans la base de données
     def save_relations(self) -> None:
         session = self.__class__.get_db()
         try:
@@ -79,6 +79,7 @@ class BaseModel(declarative_base()):
     # Retourne la session de la base de données
     @classmethod
     def get_db(cls) -> sessionmaker:
+        print(DB().db)
         return DB().db
 
     # Retourne la query de l'instance

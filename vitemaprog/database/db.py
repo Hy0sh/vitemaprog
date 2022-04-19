@@ -44,9 +44,15 @@ class DB:
     def db_engine(self) -> 'create_engine':
         return self._db_engine
 
+    def renew_session(self) -> None:
+        self.__db__ = self.get_new_session()
+
+    def get_new_session(self) -> 'sessionmaker':
+        return sessionmaker(bind=self.db_engine, expire_on_commit=False)()
+
     @property
     def db(self) -> 'sessionmaker':
         if(self.__db__ is None):
-            self.__db__ = sessionmaker(bind=self.db_engine, expire_on_commit=False)()
+            self.__db__ = self.get_new_session()
         return self.__db__
 
